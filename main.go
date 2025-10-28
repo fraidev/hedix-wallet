@@ -33,7 +33,6 @@ func main() {
 func runFile(wallet *services.Wallet, file *os.File) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		// fmt.Println() // Print each line
 		input := scanner.Text()
 		tx, err := models.ParseTransaction(input)
 		if err != nil {
@@ -46,7 +45,6 @@ func runFile(wallet *services.Wallet, file *os.File) {
 			fmt.Printf("Transaction failed: %s\n", err)
 		}
 
-		// fmt.Println()
 		fmt.Printf("   State: %s\n", wallet)
 	}
 
@@ -90,7 +88,6 @@ func runInteractive(wallet *services.Wallet) {
 		}
 
 		fmt.Printf("Current State: %s\n", wallet)
-		// fmt.Println()
 	}
 
 	fmt.Println()
