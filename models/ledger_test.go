@@ -20,7 +20,7 @@ func TestLedger_AddTransaction(t *testing.T) {
 	tx := Transaction{
 		Type:   Deposit,
 		Asset:  BTC,
-		Amount: 1.5,
+		Amount: 150000000, // 1.5 BTC in satoshis
 	}
 
 	ledger.AddTransaction(tx)
@@ -36,8 +36,8 @@ func TestLedger_AddTransaction(t *testing.T) {
 	if transactions[0].Asset != BTC {
 		t.Errorf("Expected BTC, got %s", transactions[0].Asset)
 	}
-	if transactions[0].Amount != 1.5 {
-		t.Errorf("Expected 1.5, got %f", transactions[0].Amount)
+	if transactions[0].Amount != 150000000 {
+		t.Errorf("Expected 150000000, got %d", transactions[0].Amount)
 	}
 }
 
@@ -47,68 +47,69 @@ func TestLedger_CalculateBalance_SingleDeposit(t *testing.T) {
 	ledger.AddTransaction(Transaction{
 		Type:   Deposit,
 		Asset:  BTC,
-		Amount: 2.5,
+		Amount: 250000000, // 2.5 BTC
 	})
 
 	balance := ledger.CalculateBalance(BTC)
-	if balance != 2.5 {
-		t.Errorf("Expected balance 2.5, got %f", balance)
+	expected := int64(250000000)
+	if balance != expected {
+		t.Errorf("Expected balance %d, got %d", expected, balance)
 	}
 }
 
 func TestLedger_CalculateBalance_MultipleTransactions(t *testing.T) {
 	ledger := NewLedger()
 
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 3.0})
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 2.0})
-	ledger.AddTransaction(Transaction{Type: Withdraw, Asset: BTC, Amount: 1.5})
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 300000000})  // 3.0 BTC
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 200000000})  // 2.0 BTC
+	ledger.AddTransaction(Transaction{Type: Withdraw, Asset: BTC, Amount: 150000000}) // 1.5 BTC
 
 	balance := ledger.CalculateBalance(BTC)
-	expected := 3.5 // 3.0 + 2.0 - 1.5
+	expected := int64(350000000) // 3.0 + 2.0 - 1.5 = 3.5 BTC
 	if balance != expected {
-		t.Errorf("Expected balance %f, got %f", expected, balance)
+		t.Errorf("Expected balance %d, got %d", expected, balance)
 	}
 }
 
 func TestLedger_CalculateBalance_MultipleAssets(t *testing.T) {
 	ledger := NewLedger()
 
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 1.0})
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: ETH, Amount: 2.0})
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: USD, Amount: 100.0})
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 100000000})                 // 1.0 BTC
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: ETH, Amount: 2000000000000000000})       // 2.0 ETH
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: USD, Amount: 10000})                     // 100.00 USD
 
 	btcBalance := ledger.CalculateBalance(BTC)
 	ethBalance := ledger.CalculateBalance(ETH)
 	usdBalance := ledger.CalculateBalance(USD)
 
-	if btcBalance != 1.0 {
-		t.Errorf("Expected BTC balance 1.0, got %f", btcBalance)
+	if btcBalance != 100000000 {
+		t.Errorf("Expected BTC balance 100000000, got %d", btcBalance)
 	}
-	if ethBalance != 2.0 {
-		t.Errorf("Expected ETH balance 2.0, got %f", ethBalance)
+	if ethBalance != 2000000000000000000 {
+		t.Errorf("Expected ETH balance 2000000000000000000, got %d", ethBalance)
 	}
-	if usdBalance != 100.0 {
-		t.Errorf("Expected USD balance 100.0, got %f", usdBalance)
+	if usdBalance != 10000 {
+		t.Errorf("Expected USD balance 10000, got %d", usdBalance)
 	}
 }
 
 func TestLedger_CalculateAllBalances(t *testing.T) {
 	ledger := NewLedger()
 
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 1.0})
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: ETH, Amount: 2.0})
-	ledger.AddTransaction(Transaction{Type: Deposit, Asset: USD, Amount: 100.0})
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: BTC, Amount: 100000000})           // 1.0 BTC
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: ETH, Amount: 2000000000000000000}) // 2.0 ETH
+	ledger.AddTransaction(Transaction{Type: Deposit, Asset: USD, Amount: 10000})               // 100.00 USD
 
 	balances := ledger.CalculateAllBalances()
 
-	if balances[BTC] != 1.0 {
-		t.Errorf("Expected BTC balance 1.0, got %f", balances[BTC])
+	if balances[BTC] != 100000000 {
+		t.Errorf("Expected BTC balance 100000000, got %d", balances[BTC])
 	}
-	if balances[ETH] != 2.0 {
-		t.Errorf("Expected ETH balance 2.0, got %f", balances[ETH])
+	if balances[ETH] != 2000000000000000000 {
+		t.Errorf("Expected ETH balance 2000000000000000000, got %d", balances[ETH])
 	}
-	if balances[USD] != 100.0 {
-		t.Errorf("Expected USD balance 100.0, got %f", balances[USD])
+	if balances[USD] != 10000 {
+		t.Errorf("Expected USD balance 10000, got %d", balances[USD])
 	}
 }
 
@@ -116,7 +117,7 @@ func TestLedger_EmptyBalance(t *testing.T) {
 	ledger := NewLedger()
 
 	balance := ledger.CalculateBalance(BTC)
-	if balance != 0.0 {
-		t.Errorf("Expected balance 0.0 for empty ledger, got %f", balance)
+	if balance != 0 {
+		t.Errorf("Expected balance 0 for empty ledger, got %d", balance)
 	}
 }

@@ -21,7 +21,7 @@ func NewWallet() *Wallet {
 // ProcessTransaction processes a transaction attempt in the ledger
 // It validates the transaction based on current balance and records the result
 func (w *Wallet) ProcessTransaction(tx models.Transaction) error {
-	// Calculate current balance for the asset
+	// Calculate current balance for the asset (in smallest units)
 	currentBalance := w.ledger.CalculateBalance(tx.Asset)
 
 	var err error
@@ -33,7 +33,10 @@ func (w *Wallet) ProcessTransaction(tx models.Transaction) error {
 	case models.Withdraw:
 		// Withdrawals only succeed if there are sufficient funds
 		if currentBalance < tx.Amount {
-			err = fmt.Errorf("insufficient funds for withdrawal: requested %.2f, available %.2f", tx.Amount, currentBalance)
+			err = fmt.Errorf("insufficient funds for withdrawal: requested %s, available %s %s",
+				formatAmount(tx.Amount, tx.Asset),
+				formatAmount(currentBalance, tx.Asset),
+				tx.Asset)
 		}
 	default:
 		err = fmt.Errorf("unknown transaction type: %s", tx.Type)
@@ -47,13 +50,13 @@ func (w *Wallet) ProcessTransaction(tx models.Transaction) error {
 	return err
 }
 
-// GetBalance returns the current balance for a specific asset
-func (w *Wallet) GetBalance(asset models.Asset) float64 {
+// GetBalance returns the current balance for a specific asset (in smallest units)
+func (w *Wallet) GetBalance(asset models.Asset) int64 {
 	return w.ledger.CalculateBalance(asset)
 }
 
-// GetAllBalances returns balances for all assets
-func (w *Wallet) GetAllBalances() map[models.Asset]float64 {
+// GetAllBalances returns balances for all assets (in smallest units)
+func (w *Wallet) GetAllBalances() map[models.Asset]int64 {
 	return w.ledger.CalculateAllBalances()
 }
 
@@ -70,6 +73,28 @@ func (w *Wallet) GetTransactionHistory() []models.Transaction {
 // String returns a string representation of the wallet balances
 func (w *Wallet) String() string {
 	balances := w.GetAllBalances()
-	return fmt.Sprintf("BTC: %.8f | ETH: %.8f | USD: %.2f",
-		balances[models.BTC], balances[models.ETH], balances[models.USD])
+	return fmt.Sprintf("BTC: %s | ETH: %s | USD: %s",
+		formatAmount(balances[models.BTC], models.BTC),
+		formatAmount(balances[models.ETH], models.ETH),
+		formatAmount(balances[models.USD], models.USD))
+}
+
+// formatAmount converts smallest unit to human-readable format
+func formatAmount(amount int64, asset models.Asset) string {
+	decimals := asset.GetDecimals()
+	divisor := int64(1)
+	for range decimals {
+		divisor *= 10
+	}
+
+	intPart := amount / divisor
+	fracPart := amount % divisor
+
+	if fracPart < 0 {
+		fracPart = -fracPart
+	}
+
+	// Format with appropriate decimal places
+	formatStr := fmt.Sprintf("%%d.%%0%dd", decimals)
+	return fmt.Sprintf(formatStr, intPart, fracPart)
 }

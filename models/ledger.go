@@ -24,8 +24,9 @@ func (l *Ledger) GetTransactions() []Transaction {
 
 // CalculateBalance calculates the current balance for a specific asset
 // by replaying all successful transactions from the ledger
-func (l *Ledger) CalculateBalance(asset Asset) float64 {
-	balance := 0.0
+// Returns balance in smallest unit (satoshis, wei, cents)
+func (l *Ledger) CalculateBalance(asset Asset) int64 {
+	var balance int64 = 0
 
 	for _, transaction := range l.transactions {
 		// Only process successful transactions for the requested asset
@@ -45,8 +46,9 @@ func (l *Ledger) CalculateBalance(asset Asset) float64 {
 }
 
 // CalculateAllBalances calculates balances for all assets
-func (l *Ledger) CalculateAllBalances() map[Asset]float64 {
-	return map[Asset]float64{
+// Returns balances in smallest units
+func (l *Ledger) CalculateAllBalances() map[Asset]int64 {
+	return map[Asset]int64{
 		BTC: l.CalculateBalance(BTC),
 		ETH: l.CalculateBalance(ETH),
 		USD: l.CalculateBalance(USD),

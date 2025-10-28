@@ -13,14 +13,14 @@ func TestNewWallet(t *testing.T) {
 		t.Fatal("Expected non-nil wallet")
 	}
 
-	if wallet.GetBalance(models.BTC) != 0.0 {
-		t.Error("Expected BTC balance to be 0.0 for new wallet")
+	if wallet.GetBalance(models.BTC) != 0 {
+		t.Error("Expected BTC balance to be 0 for new wallet")
 	}
-	if wallet.GetBalance(models.ETH) != 0.0 {
-		t.Error("Expected ETH balance to be 0.0 for new wallet")
+	if wallet.GetBalance(models.ETH) != 0 {
+		t.Error("Expected ETH balance to be 0 for new wallet")
 	}
-	if wallet.GetBalance(models.USD) != 0.0 {
-		t.Error("Expected USD balance to be 0.0 for new wallet")
+	if wallet.GetBalance(models.USD) != 0 {
+		t.Error("Expected USD balance to be 0 for new wallet")
 	}
 }
 
@@ -30,7 +30,7 @@ func TestWallet_DepositSuccess(t *testing.T) {
 	tx := models.Transaction{
 		Type:   models.Deposit,
 		Asset:  models.BTC,
-		Amount: 2.5,
+		Amount: 250000000, // 2.5 BTC
 	}
 
 	err := wallet.ProcessTransaction(tx)
@@ -39,8 +39,9 @@ func TestWallet_DepositSuccess(t *testing.T) {
 	}
 
 	balance := wallet.GetBalance(models.BTC)
-	if balance != 2.5 {
-		t.Errorf("Expected balance 2.5, got %f", balance)
+	expected := int64(250000000)
+	if balance != expected {
+		t.Errorf("Expected balance %d, got %d", expected, balance)
 	}
 }
 
@@ -51,14 +52,14 @@ func TestWallet_WithdrawSuccess(t *testing.T) {
 	wallet.ProcessTransaction(models.Transaction{
 		Type:   models.Deposit,
 		Asset:  models.BTC,
-		Amount: 5.0,
+		Amount: 500000000, // 5.0 BTC
 	})
 
 	// Then withdraw
 	tx := models.Transaction{
 		Type:   models.Withdraw,
 		Asset:  models.BTC,
-		Amount: 2.0,
+		Amount: 200000000, // 2.0 BTC
 	}
 
 	err := wallet.ProcessTransaction(tx)
@@ -67,9 +68,9 @@ func TestWallet_WithdrawSuccess(t *testing.T) {
 	}
 
 	balance := wallet.GetBalance(models.BTC)
-	expected := 3.0
+	expected := int64(300000000) // 3.0 BTC
 	if balance != expected {
-		t.Errorf("Expected balance %f, got %f", expected, balance)
+		t.Errorf("Expected balance %d, got %d", expected, balance)
 	}
 }
 
@@ -80,14 +81,14 @@ func TestWallet_WithdrawInsufficientFunds(t *testing.T) {
 	wallet.ProcessTransaction(models.Transaction{
 		Type:   models.Deposit,
 		Asset:  models.BTC,
-		Amount: 1.0,
+		Amount: 100000000, // 1.0 BTC
 	})
 
 	// Try to withdraw more than available
 	tx := models.Transaction{
 		Type:   models.Withdraw,
 		Asset:  models.BTC,
-		Amount: 2.0,
+		Amount: 200000000, // 2.0 BTC
 	}
 
 	err := wallet.ProcessTransaction(tx)
@@ -97,8 +98,9 @@ func TestWallet_WithdrawInsufficientFunds(t *testing.T) {
 
 	// Balance should remain unchanged
 	balance := wallet.GetBalance(models.BTC)
-	if balance != 1.0 {
-		t.Errorf("Expected balance 1.0 (unchanged), got %f", balance)
+	expected := int64(100000000)
+	if balance != expected {
+		t.Errorf("Expected balance %d (unchanged), got %d", expected, balance)
 	}
 
 	// Transaction should not be recorded
@@ -114,7 +116,7 @@ func TestWallet_WithdrawFromEmptyWallet(t *testing.T) {
 	tx := models.Transaction{
 		Type:   models.Withdraw,
 		Asset:  models.BTC,
-		Amount: 1.0,
+		Amount: 100000000, // 1.0 BTC
 	}
 
 	err := wallet.ProcessTransaction(tx)
@@ -123,8 +125,8 @@ func TestWallet_WithdrawFromEmptyWallet(t *testing.T) {
 	}
 
 	balance := wallet.GetBalance(models.BTC)
-	if balance != 0.0 {
-		t.Errorf("Expected balance 0.0, got %f", balance)
+	if balance != 0 {
+		t.Errorf("Expected balance 0, got %d", balance)
 	}
 }
 
@@ -132,39 +134,39 @@ func TestWallet_MultipleAssets(t *testing.T) {
 	wallet := NewWallet()
 
 	// Deposit to different assets
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 1.0})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 2.0})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.USD, Amount: 100.0})
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 100000000})           // 1.0 BTC
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 2000000000000000000}) // 2.0 ETH
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.USD, Amount: 10000})               // 100.00 USD
 
 	// Verify balances are independent
-	if wallet.GetBalance(models.BTC) != 1.0 {
-		t.Errorf("Expected BTC balance 1.0, got %f", wallet.GetBalance(models.BTC))
+	if wallet.GetBalance(models.BTC) != 100000000 {
+		t.Errorf("Expected BTC balance 100000000, got %d", wallet.GetBalance(models.BTC))
 	}
-	if wallet.GetBalance(models.ETH) != 2.0 {
-		t.Errorf("Expected ETH balance 2.0, got %f", wallet.GetBalance(models.ETH))
+	if wallet.GetBalance(models.ETH) != 2000000000000000000 {
+		t.Errorf("Expected ETH balance 2000000000000000000, got %d", wallet.GetBalance(models.ETH))
 	}
-	if wallet.GetBalance(models.USD) != 100.0 {
-		t.Errorf("Expected USD balance 100.0, got %f", wallet.GetBalance(models.USD))
+	if wallet.GetBalance(models.USD) != 10000 {
+		t.Errorf("Expected USD balance 10000, got %d", wallet.GetBalance(models.USD))
 	}
 }
 
 func TestWallet_GetAllBalances(t *testing.T) {
 	wallet := NewWallet()
 
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 1.5})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 3.0})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.USD, Amount: 250.0})
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 150000000})           // 1.5 BTC
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 3000000000000000000}) // 3.0 ETH
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.USD, Amount: 25000})               // 250.00 USD
 
 	balances := wallet.GetAllBalances()
 
-	if balances[models.BTC] != 1.5 {
-		t.Errorf("Expected BTC balance 1.5, got %f", balances[models.BTC])
+	if balances[models.BTC] != 150000000 {
+		t.Errorf("Expected BTC balance 150000000, got %d", balances[models.BTC])
 	}
-	if balances[models.ETH] != 3.0 {
-		t.Errorf("Expected ETH balance 3.0, got %f", balances[models.ETH])
+	if balances[models.ETH] != 3000000000000000000 {
+		t.Errorf("Expected ETH balance 3000000000000000000, got %d", balances[models.ETH])
 	}
-	if balances[models.USD] != 250.0 {
-		t.Errorf("Expected USD balance 250.0, got %f", balances[models.USD])
+	if balances[models.USD] != 25000 {
+		t.Errorf("Expected USD balance 25000, got %d", balances[models.USD])
 	}
 }
 
@@ -172,11 +174,11 @@ func TestWallet_TransactionHistory(t *testing.T) {
 	wallet := NewWallet()
 
 	// Add successful transactions
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 1.0})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 2.0})
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 100000000})           // 1.0 BTC
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 2000000000000000000}) // 2.0 ETH
 
 	// Try failed transaction
-	wallet.ProcessTransaction(models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 5.0})
+	wallet.ProcessTransaction(models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 500000000}) // 5.0 BTC - should fail
 
 	history := wallet.GetTransactionHistory()
 
@@ -189,12 +191,12 @@ func TestWallet_TransactionHistory(t *testing.T) {
 func TestWallet_String(t *testing.T) {
 	wallet := NewWallet()
 
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 1.5})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 2.0})
-	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.USD, Amount: 100.50})
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 150000000})           // 1.5 BTC
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.ETH, Amount: 2000000000000000000}) // 2.0 ETH
+	wallet.ProcessTransaction(models.Transaction{Type: models.Deposit, Asset: models.USD, Amount: 10050})               // 100.50 USD
 
 	result := wallet.String()
-	expected := "BTC: 1.50000000 | ETH: 2.00000000 | USD: 100.50"
+	expected := "BTC: 1.50000000 | ETH: 2.000000000000000000 | USD: 100.50"
 
 	if result != expected {
 		t.Errorf("Expected string: %s, got: %s", expected, result)
@@ -209,11 +211,11 @@ func TestWallet_ComplexScenario(t *testing.T) {
 		tx      models.Transaction
 		wantErr bool
 	}{
-		{models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 10.0}, false},
-		{models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 3.0}, false},
-		{models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 5.0}, false},
-		{models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 2.0}, false},
-		{models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 20.0}, true}, // Should fail
+		{models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 1000000000}, false},  // 10.0 BTC
+		{models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 300000000}, false},  // 3.0 BTC
+		{models.Transaction{Type: models.Deposit, Asset: models.BTC, Amount: 500000000}, false},   // 5.0 BTC
+		{models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 200000000}, false},  // 2.0 BTC
+		{models.Transaction{Type: models.Withdraw, Asset: models.BTC, Amount: 2000000000}, true},  // 20.0 BTC - should fail
 	}
 
 	for i, tt := range transactions {
@@ -223,10 +225,10 @@ func TestWallet_ComplexScenario(t *testing.T) {
 		}
 	}
 
-	// Expected: 10 - 3 + 5 - 2 = 10
-	expectedBalance := 10.0
+	// Expected: 10 - 3 + 5 - 2 = 10 BTC = 1000000000 satoshis
+	expectedBalance := int64(1000000000)
 	actualBalance := wallet.GetBalance(models.BTC)
 	if actualBalance != expectedBalance {
-		t.Errorf("Expected final balance %f, got %f", expectedBalance, actualBalance)
+		t.Errorf("Expected final balance %d, got %d", expectedBalance, actualBalance)
 	}
 }
